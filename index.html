@@ -743,40 +743,51 @@ CRITICAL RULES:
     }
 
     async function makeGeminiApiCall(query, systemInstruction, schema, searchGrounding = false, apiModel = "gemini-2.5-flash-preview-09-2025", retries = 5, delay = 1000) {
-      // Use deployment key from local storage if available; otherwise rely on the environment's default blank key
       const customKey = localStorage.getItem("medquest_custom_api_key");
       const activeKey = customKey || apiKey;
       
-      // CRITICAL GUARDRAIL: If we are running inside the sandbox preview iframe (no custom key stored),
-      // we MUST use "gemini-2.5-flash-preview-09-2025". Public models like "gemini-1.5-flash" do not exist
-      // under the proxy credential scheme and will cause failures.
+      // Determine the active API endpoint version based on custom key presence.
+      // Custom key deployments use stable "v1" whereas internal preview sandboxes strictly require "v1beta".
+      let apiVersion = "v1beta"; 
+      
       if (!customKey) {
         apiModel = "gemini-2.5-flash-preview-09-2025";
+        apiVersion = "v1beta";
       } else {
-        // Conversely, standard public API keys DO NOT support preview-only model IDs. 
-        // If a custom key is saved and the user left the model on default, dynamically redirect to production gemini-1.5-flash.
+        // Fallback standard model naming for custom keys
         if (apiModel === "gemini-2.5-flash-preview-09-2025") {
           apiModel = "gemini-1.5-flash";
         }
+        // Force standard "v1" stable release API endpoint for standard custom key deployments
+        apiVersion = "v1";
       }
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${activeKey}`;
-      
       const payload = {
         contents: [{ parts: [{ text: query }] }],
         systemInstruction: { parts: [{ text: systemInstruction }] },
         generationConfig: { responseMimeType: "application/json", responseSchema: schema }
       };
 
-      if (searchGrounding) { payload.tools = [{ "google_search": {} }]; }
+      if (searchGrounding && apiVersion === "v1beta") { 
+        payload.tools = [{ "google_search": {} }]; 
+      }
 
       for (let i = 0; i < retries; i++) {
         try {
+          const url = `https://generativelanguage.googleapis.com/${apiVersion}/models/${apiModel}:generateContent?key=${activeKey}`;
           const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+          
           if (!response.ok) {
             const errData = await response.json();
+            // If the stable endpoint fails or model isn't supported there, toggle to the alternative beta endpoint
+            if (apiVersion === "v1") {
+              console.warn("Attempting fallback to v1beta API endpoint...");
+              apiVersion = "v1beta";
+              throw new Error("Temporary endpoint retry trigger");
+            }
             throw new Error(errData.error?.message || "HTTP Error");
           }
+          
           const data = await response.json();
           const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
           if (!textResponse) throw new Error("Empty candidate response");
