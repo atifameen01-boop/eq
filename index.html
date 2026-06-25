@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Branded Methods MedQuest: USMLE-Style OBA & SEQ Designer & Simulator</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+  <!-- TOP HEADER -->
+  <header class="bg-indigo-950 text-white border-b border-indigo-900 sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-gradient-to-tr from-cyan-400 to-indigo-500 p-2 rounded-xl shadow-inner">
+          <i class="fa-solid fa-stethoscope text-xl text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight flex items-center gap-2">
+            Branded Methods MedQuest <span class="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full border border-cyan-500/30 font-medium">OBA & SEQ Designer</span>
+          </h1>
+          <p class="text-[10px] text-indigo-300">USMLE-Style Clinical Vignette and Questions Generator for MBBS</p>
+        </div>
+      </div>
+      
+      <!-- API Configuration Status Badge -->
+      <div class="flex items-center space-x-3">
+        <div class="hidden md:flex items-center space-x-2 text-xs bg-indigo-900/60 border border-indigo-800 rounded-lg px-3 py-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-indigo-200">Engine: <strong id="header-model-badge" class="text-white">Gemini 2.5 Flash</strong></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex flex-col lg:flex-row gap-8">
+    
+    <!-- LEFT SIDEBAR: CREATOR & CONFIGURATION -->
+    <section class="w-full lg:w-5/12 flex flex-col space-y-6">
+      
+      <!-- Quick Info / Mode Switcher -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
+        <h2 class="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-indigo-600"></i> Configure Question Specs
+        </h2>
+        <p class="text-xs text-slate-500 mb-6">Select a medical subject, outline a specific topic, or paste references to instantly draft a psychometrically-sound USMLE-style OBA.</p>
+        
+        <div class="space-y-4">
+          <!-- Subject Select -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1.5">Medical Subject</label>
+            <select id="subject-select" onchange="suggestTopics()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+              <option value="Pathology">Pathology (e.g., Cellular Injury, Neoplasia, Systemic Pathology)</option>
+              <option value="Pharmacology">Pharmacology (e.g., Pharmacokinetics, Autonomics, Antimicrobials)</option>
+              <option value="Physiology">Physiology (e.g., Renal, Cardiovascular, Endocrine, Respiratory)</option>
+              <option value="Microbiology & Immunology">Microbiology & Immunology (e.g., Bacteriology, Virology, Immune Deficiencies)</option>
+              <option value="Biochemistry & Genetics">Biochemistry & Genetics (e.g., Metabolic Disorders, Molecular Biology)</option>
+              <option value="Anatomy & Embryology">Anatomy & Embryology (e.g., Neuroanatomy, Gross Anatomy, Organogenesis)</option>
+              <option value="Behavioral Science & Biostatistics">Behavioral Science & Biostatistics (e.g., Epidemiology, Ethics, Psychiatry)</option>
+              <option value="Internal Medicine">Internal Medicine (Clinical Vignette Step 2 style)</option>
+              <option value="General Surgery">General Surgery / Trauma Care</option>
+            </select>
+          </div>
+
+          <!-- Suggested Topic / Custom Topic input -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1.5 flex justify-between items-center">
+              <span>Topic or Core Concept</span>
+              <span class="text-[10px] text-indigo-600 cursor-pointer font-normal" onclick="randomizeTopic()">
+                <i class="fa-solid fa-shuffle mr-1"></i> Randomize Idea
+              </span>
+            </label>
+            <input type="text" id="topic-input" placeholder="e.g., Pheochromocytoma diagnosis & pharmacology" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" value="Pheochromocytoma diagnosis & pharmacology">
+          </div>
+
+          <!-- Question Format, Complexity & Focus -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold uppercase text-slate-500 mb-1.5">Question Format</label>
+              <select id="format-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition font-semibold text-indigo-700">
+                <option value="OBA">OBA (Multiple Choice)</option>
+                <option value="SEQ">SEQ (Short Essay / Written)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold uppercase text-slate-500 mb-1.5">Question Focus</label>
+              <select id="focus-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                <option value="Diagnosis">Diagnosis / Presentation</option>
+                <option value="Mechanism of Disease / Pathophysiology">Pathophysiology / Mechanism</option>
+                <option value="Pharmacotherapy / Side Effect">Pharmacotherapy / Adverse Effects</option>
+                <option value="Next Step in Management">Next Step in Management</option>
+                <option value="Biochemical / Molecular basis">Biochemical Basis</option>
+              </select>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1.5">MBBS/USMLE Tier</label>
+            <select id="tier-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+              <option value="Step 1 (Basic Sciences Integration)">Step 1 (Pre-Clinical)</option>
+              <option value="Step 2 CK (Clinical Knowledge)">Step 2 CK (Clinical Sciences)</option>
+              <option value="MBBS Year 2/3 (Intermediate Foundations)">MBBS Early Professional</option>
+              <option value="MBBS Final Professional (Comprehensive)">MBBS Final Proff</option>
+            </select>
+          </div>
+
+          <!-- Optional Context / Reference Notes -->
+          <div>
+            <label class="block text-xs font-semibold uppercase text-slate-500 mb-1.5 flex justify-between items-center">
+              <span>Reference Notes / Syllabus Text (Optional)</span>
+              <span class="text-[10px] text-slate-400">Guarantees lesson alignment</span>
+            </label>
+            <textarea id="reference-notes" rows="3" placeholder="Paste textbook excerpts, slide outlines, or lecture notes here to guide the question parameters precisely..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-none"></textarea>
+          </div>
+
+          <!-- Google Grounding Checkbox -->
+          <div class="bg-indigo-50/50 rounded-xl p-3 border border-indigo-100 flex items-start space-x-3">
+            <input type="checkbox" id="grounding-toggle" class="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-slate-300 rounded cursor-pointer" checked>
+            <div class="text-xs">
+              <label for="grounding-toggle" class="font-semibold text-indigo-950 flex items-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-globe text-indigo-600"></i> Enable Medical Facts Verification
+              </label>
+              <p class="text-indigo-700/80 mt-0.5">Integrates Google Search Grounding to guarantee clinical, lab value, and diagnostic accuracy according to current USMLE guidelines.</p>
+            </div>
+          </div>
+
+          <!-- Create Button -->
+          <button id="generate-btn" onclick="generateQuestion()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-md shadow-indigo-600/15 flex items-center justify-center space-x-2 transition hover:-translate-y-0.5 active:translate-y-0 duration-150">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Draft 5 Clinical Questions</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- BULK GENERATION OPTION -->
+      <div class="bg-slate-900 text-slate-100 rounded-2xl p-6 shadow-sm border border-slate-800">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-cubes text-cyan-400"></i> Bulk Outlining Engine
+          </h3>
+          <span class="bg-cyan-500/20 text-cyan-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-cyan-500/30">Flash Mode</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-4">Generate 5 progressive questions at once targeting a complete pathological/pharmacological system outline.</p>
+        
+        <div class="space-y-3">
+          <div>
+            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">System Pathway / Core Disease Profile</label>
+            <input type="text" id="bulk-topic" value="Hypertensive crises & Pharmacotherapy" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-cyan-500" placeholder="e.g., Acute Coronary Syndrome management">
+          </div>
+          <button id="bulk-generate-btn" onclick="generateBulkQuestions()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center space-x-2 transition">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Generate 5-Part Vignette Set</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT SIDEBAR: CURRENT OBA WORKSPACE, EDITOR & PREVIEW -->
+    <section class="w-full lg:w-7/12 flex flex-col space-y-6">
+      
+      <!-- NAV TABS FOR WORKSPACE -->
+      <div class="flex items-center justify-between border-b border-slate-200">
+        <nav class="flex space-x-2" aria-label="Tabs">
+          <button onclick="switchTab('interactive')" id="tab-btn-interactive" class="border-b-2 border-indigo-600 py-3 px-4 text-sm font-semibold text-indigo-600 transition flex items-center gap-2">
+            <i class="fa-solid fa-circle-play"></i> Test & Verify Mode
+          </button>
+          <button onclick="switchTab('editor')" id="tab-btn-editor" class="border-b-2 border-transparent py-3 px-4 text-sm font-medium text-slate-500 hover:text-slate-700 hover:border-slate-300 transition flex items-center gap-2">
+            <i class="fa-solid fa-pen-to-square"></i> Live Text Editor
+          </button>
+          <button onclick="switchTab('bank')" id="tab-btn-bank" class="border-b-2 border-transparent py-3 px-4 text-sm font-medium text-slate-500 hover:text-slate-700 hover:border-slate-300 transition flex items-center gap-2">
+            <i class="fa-solid fa-database"></i> Question Bank (<span id="qbank-count">0</span>)
+          </button>
+        </nav>
+
+        <!-- Action Items (Right aligned) -->
+        <div class="flex items-center space-x-2">
+          <button onclick="exportToClipboard()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-copy"></i> Copy MD
+          </button>
+          <button onclick="downloadAsWord()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-file-word text-blue-600"></i> Word Doc
+          </button>
+        </div>
+      </div>
+
+      <!-- WORKSPACE TABS CONTAINER -->
+      <div id="workspace-content">
+        
+        <!-- TAB 1: INTERACTIVE TEST & VERIFY MODE -->
+        <div id="tab-content-interactive" class="space-y-6">
+          <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200/80 relative">
+            
+            <!-- Quick subject info strip -->
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4 mb-6">
+              <div class="flex items-center space-x-2">
+                <span id="preview-format-badge" class="bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">
+                  OBA
+                </span>
+                <span id="preview-subject-badge" class="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2.5 py-1 rounded-md border border-indigo-100">
+                  Pathology
+                </span>
+                <span id="preview-tier-badge" class="bg-slate-100 text-slate-600 text-xs font-medium px-2.5 py-1 rounded-md">
+                  Step 1 (Basic Sciences)
+                </span>
+              </div>
+              <div class="flex items-center space-x-2 text-xs text-slate-400">
+                <i class="fa-solid fa-circle-check text-indigo-600"></i>
+                <span>USMLE Format</span>
+              </div>
+            </div>
+
+            <!-- CLINICAL VIGNETTE DISPLAY -->
+            <div class="prose max-w-none">
+              <p id="preview-vignette" class="text-slate-800 text-base leading-relaxed font-medium bg-slate-50/50 p-4 rounded-xl border border-dashed border-slate-200/80 mb-6">
+                Please configure options on the left and click "Draft 5 Clinical Questions" to generate your first medical clinical question vignette.
+              </p>
+            </div>
+
+            <!-- LEAD-IN QUESTION -->
+            <div class="mb-6">
+              <h3 id="preview-leadin" class="text-md sm:text-lg font-bold text-slate-900 leading-snug">
+                The lead-in question will appear here.
+              </h3>
+            </div>
+
+            <!-- DYNAMIC OPTIONS / SEQ INPUT AREA -->
+            <div class="space-y-3 mb-8" id="preview-options-container">
+              <!-- Rendered options or Textarea will go here -->
+              <p class="text-sm text-slate-500 italic">Waiting for generation...</p>
+            </div>
+
+            <!-- EXPLANATIONS & HIGH YIELD PEARL (HIDDEN BY DEFAULT UNTIL SUBMITTED) -->
+            <div id="explanation-box" class="hidden space-y-6 pt-6 border-t border-slate-100">
+              <div class="bg-indigo-950 text-indigo-100 p-5 rounded-2xl border border-indigo-900 shadow-inner">
+                <h4 class="text-sm font-bold uppercase tracking-wider text-cyan-400 mb-2 flex items-center gap-2">
+                  <i class="fa-solid fa-graduation-cap"></i> High Yield Clinical Pearl
+                </h4>
+                <p id="pearl-text" class="text-xs sm:text-sm leading-relaxed text-indigo-100">
+                  The clinical explanation capsule is prepared. Click options above to assess diagnostics.
+                </p>
+              </div>
+
+              <div class="space-y-4">
+                <h4 id="review-title" class="text-sm font-bold uppercase tracking-wider text-slate-500">Detailed Explanatory Review</h4>
+                <div id="all-exp-container" class="space-y-3">
+                  <!-- All explanations or SEQ rubrics dynamically loaded here -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Search Grounding References (Dynamic integration) -->
+            <div id="grounding-sources-container" class="hidden mt-6 bg-slate-100 p-4 rounded-xl border border-slate-200">
+              <h5 class="text-xs font-bold uppercase text-slate-600 mb-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-circle-nodes text-slate-500"></i> Fact-Check & Verification Sources
+              </h5>
+              <div id="grounding-sources-list" class="flex flex-col gap-1.5 text-xs text-indigo-600">
+                <!-- Sources here -->
+              </div>
+            </div>
+
+            <!-- QUESTION NAVIGATION -->
+            <div id="question-nav" class="hidden flex justify-between items-center bg-slate-50 border border-slate-200 p-3 rounded-xl mt-8">
+               <button onclick="navigateQuestion(-1)" id="btn-prev-q" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm">
+                 <i class="fa-solid fa-arrow-left"></i> Previous
+               </button>
+               <span class="text-sm font-bold text-slate-500" id="question-counter">Question 1 of 5</span>
+               <button onclick="navigateQuestion(1)" id="btn-next-q" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 hover:text-indigo-600 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm">
+                 Next <i class="fa-solid fa-arrow-right"></i>
+               </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- TAB 2: LIVE TEXT EDITOR -->
+        <div id="tab-content-editor" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-6">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Live Text Editor (with model answer and grading rubrics)</h3>
+              <p class="text-xs text-slate-400">Modify structure, clinical details, and correct choices manually.</p>
+            </div>
+            <button onclick="saveManualEdits()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-floppy-disk"></i> Apply Edits
+            </button>
+          </div>
+
+          <div id="dynamic-editor-fields" class="space-y-4">
+            <!-- Dynamically populated via JS depending on OBA or SEQ -->
+          </div>
+        </div>
+
+        <!-- TAB 3: QUESTION BANK -->
+        <div id="tab-content-bank" class="hidden space-y-6">
+          <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Your Generated Exam Bank</h3>
+                <p class="text-xs text-slate-400">Manage and export all clinical vignette items.</p>
+              </div>
+              <div class="flex space-x-2">
+                <button onclick="clearQBank()" class="text-xs bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                  <i class="fa-solid fa-trash-can"></i> Reset Bank
+                </button>
+              </div>
+            </div>
+
+            <div id="bank-list-container" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+              <div class="text-center py-12 text-slate-400">
+                <i class="fa-solid fa-folder-open text-4xl mb-3 block text-slate-300"></i>
+                <p class="text-sm font-medium">Your question bank is empty.</p>
+                <p class="text-xs text-slate-400 mt-1">Generate dynamic USMLE OBAs to store them in this session.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 mt-12 text-center text-xs">
+    <div class="max-w-7xl mx-auto px-4">
+      <p>&copy; 2026 [Atif Amin Baig]. Designed for MBBS Clinical Competency & USMLE Preparation.</p>
+      <p class="mt-1 font-medium text-slate-400">Applied College, University of Tabuk, Tabuk, Saudi Arabia</p>
+      <p class="mt-2 text-slate-500">Built using Gemini 2.5 Flash for advanced medical education synthesis.</p>
+    </div>
+  </footer>
+
+  <!-- LOADER BLOCK -->
+  <div id="global-loader" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-white hidden">
+    <div class="bg-indigo-950 border border-indigo-900 p-8 rounded-3xl max-w-md text-center shadow-2xl relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-cyan-500/5 pointer-events-none"></div>
+      <div class="relative z-10 space-y-4">
+        <!-- Spinning animation of a DNA helix or stethoscope -->
+        <div class="inline-block relative">
+          <i class="fa-solid fa-dna text-5xl text-cyan-400 animate-pulse"></i>
+          <div class="absolute inset-0 flex items-center justify-center animate-spin duration-1000">
+            <i class="fa-solid fa-spinner text-6xl text-indigo-500/30"></i>
+          </div>
+        </div>
+        <div>
+          <h4 id="loader-title" class="text-lg font-bold">Synthesizing OBA Clinical Case</h4>
+          <p id="loader-desc" class="text-xs text-slate-400 mt-1">Applying USMLE exam specifications, validating diagnostic values, and mapping logical high-yield distractors...</p>
+        </div>
+        <!-- Progress bar visual -->
+        <div class="w-full bg-indigo-900/50 h-1.5 rounded-full overflow-hidden border border-indigo-800">
+          <div class="bg-gradient-to-r from-cyan-400 to-indigo-500 h-full w-2/3 animate-pulse rounded-full"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR / WARNING MODAL -->
+  <div id="error-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="error-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity" onclick="toggleErrorModal()"></div>
+      <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+      <div class="inline-block align-bottom bg-white rounded-2xl px-6 pt-5 pb-6 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
+        <div>
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-rose-50 border border-rose-100 text-rose-600 mb-4">
+            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+          </div>
+          <div class="text-center">
+            <h3 class="text-base font-bold text-slate-900" id="error-title">Clinical Synthesis Interrupted</h3>
+            <div class="mt-2">
+              <p id="error-desc" class="text-xs text-slate-500 leading-relaxed">An error occurred while generating or validating the clinical vignette parameters. Please verify your settings or your API key settings.</p>
+            </div>
+          </div>
+        </div>
+        <div class="mt-5">
+          <button onclick="toggleErrorModal()" type="button" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2.5 bg-slate-900 text-xs font-semibold text-white hover:bg-slate-800 transition">
+            Acknowledge
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPTS & GENERATIVE ENGINE CORE -->
+  <script>
+    // System Configurations
+    const apiKey = "";
+
+    // Application state
+    let activeTab = "interactive";
+    let currentQuestion = null;
+    let selectedOptionIndex = null;
+    let questionsList = []; // Local history of session questions
+
+    // Initialization
+    window.onload = function() {
+      // Populate first random topic suggestion
+      randomizeTopic();
+      renderQBank();
+    }
+
+    // Toggle Custom Error Modal
+    function toggleErrorModal(title, desc) {
+      const modal = document.getElementById("error-modal");
+      if (title && desc) {
+        document.getElementById("error-title").innerText = title;
+        document.getElementById("error-desc").innerText = desc;
+      }
+      modal.classList.toggle("hidden");
+    }
+
+    // Helper to handle switching views
+    function switchTab(tabId) {
+      activeTab = tabId;
+      // Reset classes
+      const tabs = ["interactive", "editor", "bank"];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const content = document.getElementById(`tab-content-${t}`);
+        if (t === tabId) {
+          btn.classList.add("border-indigo-600", "text-indigo-600");
+          btn.classList.remove("border-transparent", "text-slate-500");
+          content.classList.remove("hidden");
+        } else {
+          btn.classList.remove("border-indigo-600", "text-indigo-600");
+          btn.classList.add("border-transparent", "text-slate-500");
+          content.classList.add("hidden");
+        }
+      });
+      
+      // Update editor data if switching to editor
+      if (tabId === "editor") {
+        populateEditor();
+      }
+    }
+
+    // Question Navigation function
+    function navigateQuestion(direction) {
+      if (!currentQuestion) return;
+      const currentIndex = questionsList.findIndex(q => q.id === currentQuestion.id);
+      if (currentIndex === -1) return;
+      
+      const newIndex = currentIndex + direction;
+      if (newIndex >= 0 && newIndex < questionsList.length) {
+        currentQuestion = questionsList[newIndex];
+        selectedOptionIndex = null;
+        renderInteractiveQuestion();
+      }
+    }
+
+    // Medical Topics Dictionary for random inspiration
+    const SUBJECT_TOPICS = {
+      "Pathology": ["Metastatic calcification in chronic kidney disease", "Liquefactive necrosis versus Coagulative necrosis in stroke", "Infarction and arterial occlusion patterns", "Granulomatous disease of tuberculosis vs Sarcoidosis", "Paraneoplastic syndromes associated with small cell lung cancer"],
+      "Pharmacology": ["First-line antiarrhythmic class III vs class I mechanisms", "Aminoglycoside-induced ototoxicity and nephrotoxicity", "Lithium toxicity manifestations and drug interactions", "Statin-induced myopathy under CYP3A4 inhibitors", "Direct acting cholinergic agonists and glaucoma therapy"],
+      "Physiology": ["Frank-Starling curves in congestive heart failure", "Renal compensation of chronic respiratory acidosis", "Cerebral blood flow regulation during hyperventilation", "Gastrointestinal hormone cascades after fatty meals", "Spirometry alterations in idiopathic pulmonary fibrosis"],
+      "Microbiology & Immunology": ["DiGeorge syndrome developmental pathology & CD4 counts", "Type IV hypersensitivity to poison ivy and cell-mediated pathways", "Virulence factors of Streptococcus pneumoniae (IgA protease)", "Herpes simplex virus latency and sensory root ganglia", "Severe Combined Immunodeficiency disease mutations"],
+      "Biochemistry & Genetics": ["Phenylketonuria enzyme deficiency clinical signs", "G6PD deficiency hemolysis during oxidative stress", "Tay-Sachs disease vs Niemann-Pick clinical manifestations", "Maple syrup urine disease metabolism pathway blockages", "Mitochondrial inheritance characteristics"],
+      "Anatomy & Embryology": ["Radial nerve injury at the spiral groove of humerus", "Aortic arch embryological derivatives", "Patent ductus arteriosus developmental pathophysiology", "Cavernous sinus thrombosis clinical presentations", "Incarcerated indirect inguinal hernia pathways"],
+      "Behavioral Science & Biostatistics": ["Sensitivity and Specificity transitions in screening cutoff modifications", "Calculating Odds Ratio vs Relative Risk in cohort studies", "Informed consent protocols for minors needing emergency procedures", "Physician communication strategies for handling medical errors", "Confounding vs Bias classification examples"],
+      "Internal Medicine": ["Aortic stenosis physical exam findings and murmer timing", "Acute pancreatitis management and fluid resuscitation", "Primary adrenal insufficiency (Addison disease) diagnostic trials", "Diabetic Ketoacidosis vs Hyperosmolar Hyperglycemic State", "Graves disease immunological diagnostic markers"],
+      "General Surgery": ["Acute appendicitis progression and localized somatic pain", "Tension pneumothorax immediate needle decompression sites", "Surgical margins and resection strategies for melanoma", "Cholecystitis presentation and Murphy's sign", "Small bowel obstruction clinical diagnostic sequence"]
+    };
+
+    function suggestTopics() {
+      const subject = document.getElementById("subject-select").value;
+      const suggestions = SUBJECT_TOPICS[subject] || [];
+      if (suggestions.length > 0) {
+        document.getElementById("topic-input").placeholder = `e.g., ${suggestions[0]}`;
+      }
+    }
+
+    function randomizeTopic() {
+      const subject = document.getElementById("subject-select").value;
+      const suggestions = SUBJECT_TOPICS[subject] || [];
+      if (suggestions.length > 0) {
+        const randTopic = suggestions[Math.floor(Math.random() * suggestions.length)];
+        document.getElementById("topic-input").value = randTopic;
+      }
+    }
+
+    function showLoader(show, title = "", desc = "") {
+      const loader = document.getElementById("global-loader");
+      if (show) {
+        if (title) document.getElementById("loader-title").innerText = title;
+        if (desc) document.getElementById("loader-desc").innerText = desc;
+        loader.classList.remove("hidden");
+      } else {
+        loader.classList.add("hidden");
+      }
+    }
+
+    // Dynamic generation
+    async function generateQuestion() {
+      const subject = document.getElementById("subject-select").value;
+      const format = document.getElementById("format-select").value;
+      const topic = document.getElementById("topic-input").value.trim() || "General Medicine";
+      const focus = document.getElementById("focus-select").value;
+      const tier = document.getElementById("tier-select").value;
+      const notes = document.getElementById("reference-notes").value.trim();
+      const groundingEnabled = document.getElementById("grounding-toggle").checked;
+      const selectedModel = "gemini-2.5-flash-preview-09-2025";
+
+      showLoader(true, `Synthesizing 5 ${format} Clinical Cases`, "Initializing clinical fact verification pathways...");
+
+      const systemPrompt = `You are an elite USMLE item writer and medical educator who drafts high-quality clinical questions for MBBS students.
+Your task is to write EXACTLY 5 distinct, complex clinical vignettes that match real USMLE board questions. You must return a JSON object with a 'questions' array containing exactly 5 items. Ensure all structures adhere to formal medical licensing standards.`;
+
+      let userQuery = `Draft exactly 5 authentic clinical questions for:
+Subject: ${subject}
+Specific Topic focus: ${topic}
+Focus: ${focus}
+Tier/Level: ${tier}
+${notes ? `Incorporate custom curriculum parameters from these reference notes: "${notes}"` : ''}
+
+CRITICAL RULES:
+1. Provide a realistic clinical presentation featuring age, gender, presenting complaint, physical exam findings, specific lab test findings with units, or radiological features for EACH question.
+2. The lead-in question must ask a high-order question, not just recall (e.g., ask for the mechanism, pathophysiology, drug target, embryologic derivation, or next diagnostic step).
+3. Return structured JSON exactly matching the requested schema with a 'questions' array.`;
+
+      let jsonSchema = {};
+
+      if (format === "OBA") {
+        userQuery += `
+4. Provide exactly 5 distinct options (A, B, C, D, E) for each question.
+5. Do not include 'All of the above' or 'None of the above' options.
+6. Provide a High-Yield Pearl summarizing the core takeaway.`;
+
+        jsonSchema = {
+          type: "OBJECT",
+          properties: {
+            questions: {
+              type: "ARRAY",
+              description: "Array containing exactly 5 distinct question objects.",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  vignette: { type: "STRING" },
+                  leadIn: { type: "STRING" },
+                  options: { type: "ARRAY", items: { type: "STRING" } },
+                  correctOptionIndex: { type: "INTEGER" },
+                  explanation: {
+                    type: "OBJECT",
+                    properties: {
+                      correctReason: { type: "STRING" },
+                      distractors: { type: "ARRAY", items: { type: "STRING" } },
+                      highYieldPearl: { type: "STRING" }
+                    },
+                    required: ["correctReason", "distractors", "highYieldPearl"]
+                  }
+                },
+                required: ["vignette", "leadIn", "options", "correctOptionIndex", "explanation"]
+              }
+            }
+          },
+          required: ["questions"]
+        };
+      } else {
+        userQuery += `
+4. Provide a comprehensive Model Answer to the lead-in question.
+5. Provide a Grading Rubric broken down into short, specific actionable points (e.g., '+1 point for mentioning X').
+6. Provide a High-Yield Pearl summarizing the core takeaway.`;
+
+        jsonSchema = {
+          type: "OBJECT",
+          properties: {
+            questions: {
+              type: "ARRAY",
+              description: "Array containing exactly 5 distinct question objects.",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  vignette: { type: "STRING" },
+                  leadIn: { type: "STRING" },
+                  modelAnswer: { type: "STRING" },
+                  gradingRubric: { type: "ARRAY", items: { type: "STRING" } },
+                  highYieldPearl: { type: "STRING" }
+                },
+                required: ["vignette", "leadIn", "modelAnswer", "gradingRubric", "highYieldPearl"]
+              }
+            }
+          },
+          required: ["questions"]
+        };
+      }
+
+      try {
+        const result = await makeGeminiApiCall(userQuery, systemPrompt, jsonSchema, groundingEnabled, selectedModel);
+        
+        let questionsArray = [];
+        if (result && result.questions && Array.isArray(result.questions)) {
+            questionsArray = result.questions;
+        } else if (Array.isArray(result)) {
+            questionsArray = result;
+        }
+
+        if (questionsArray.length > 0) {
+          // Reverse loop so they push into the list in sequential order (1 to 5)
+          questionsArray.reverse().forEach((item, index) => {
+            let compiledQ = {
+              id: `${Date.now()}-${index}`,
+              type: format,
+              subject: subject,
+              tier: tier,
+              vignette: item.vignette,
+              leadIn: item.leadIn,
+              highYieldPearl: format === 'OBA' ? item.explanation.highYieldPearl : item.highYieldPearl,
+              groundingSources: result.sources || []
+            };
+            
+            if (format === "OBA") {
+              compiledQ.options = item.options;
+              compiledQ.correctOptionIndex = parseInt(item.correctOptionIndex);
+              compiledQ.correctReason = item.explanation.correctReason;
+              compiledQ.distractors = item.explanation.distractors;
+            } else {
+              compiledQ.modelAnswer = item.modelAnswer;
+              compiledQ.gradingRubric = item.gradingRubric;
+            }
+            questionsList.unshift(compiledQ);
+          });
+          
+          currentQuestion = questionsList[0];
+          renderQBank();
+          selectedOptionIndex = null;
+          renderInteractiveQuestion();
+          switchTab("interactive");
+        } else {
+          throw new Error("Could not parse structured array response from Gemini.");
+        }
+      } catch (err) {
+        console.error(err);
+        toggleErrorModal("Clinical Vignette Synthesis Failed", `We could not complete the request. details: ${err.message || 'Check your internet connection or API key.'}`);
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    async function makeGeminiApiCall(query, systemInstruction, schema, searchGrounding = false, apiModel = "gemini-2.5-flash-preview-09-2025", retries = 5, delay = 1000) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`;
+      const payload = {
+        contents: [{ parts: [{ text: query }] }],
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        generationConfig: { responseMimeType: "application/json", responseSchema: schema }
+      };
+
+      if (searchGrounding) { payload.tools = [{ "google_search": {} }]; }
+
+      for (let i = 0; i < retries; i++) {
+        try {
+          const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error?.message || "HTTP Error");
+          }
+          const data = await response.json();
+          const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!textResponse) throw new Error("Empty candidate response");
+
+          const parsedData = JSON.parse(textResponse);
+          const sources = [];
+          const groundings = data.candidates?.[0]?.groundingMetadata?.groundingAttributions;
+          if (groundings) {
+            groundings.forEach(attribution => {
+              if (attribution.web) sources.push({ title: attribution.web.title, uri: attribution.web.uri });
+            });
+          }
+          parsedData.sources = sources;
+          return parsedData;
+        } catch (error) {
+          if (i === retries - 1) throw error;
+          await new Promise(res => setTimeout(res, delay));
+          delay *= 2;
+        }
+      }
+    }
+
+    function renderInteractiveQuestion() {
+      if (!currentQuestion) return;
+
+      document.getElementById("explanation-box").classList.add("hidden");
+      document.getElementById("preview-format-badge").innerText = currentQuestion.type;
+      document.getElementById("preview-format-badge").className = currentQuestion.type === 'OBA' ? "bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm" : "bg-cyan-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm";
+      document.getElementById("preview-subject-badge").innerText = currentQuestion.subject;
+      document.getElementById("preview-tier-badge").innerText = currentQuestion.tier;
+      document.getElementById("preview-vignette").innerText = currentQuestion.vignette;
+      document.getElementById("preview-leadin").innerText = currentQuestion.leadIn;
+
+      const optionsContainer = document.getElementById("preview-options-container");
+      optionsContainer.innerHTML = "";
+
+      if (currentQuestion.type === "OBA") {
+        const alphabet = ["A", "B", "C", "D", "E"];
+        currentQuestion.options.forEach((opt, idx) => {
+          const optionDiv = document.createElement("div");
+          optionDiv.id = `interactive-option-${idx}`;
+          optionDiv.className = "border border-slate-200/80 rounded-xl p-4 flex items-start space-x-3 cursor-pointer hover:bg-slate-50 hover:border-indigo-400 transition";
+          optionDiv.onclick = () => selectInteractiveOption(idx);
+          optionDiv.innerHTML = `
+            <span class="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 shrink-0 select-none">${alphabet[idx]}</span>
+            <p class="text-sm font-medium text-slate-700 leading-normal">${opt}</p>
+          `;
+          optionsContainer.appendChild(optionDiv);
+        });
+      } else if (currentQuestion.type === "SEQ") {
+        optionsContainer.innerHTML = `
+          <div class="space-y-4">
+            <textarea rows="5" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition resize-y" placeholder="Draft your short essay answer here..."></textarea>
+            <button onclick="revealSEQAnswer()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 px-4 rounded-xl shadow-md flex items-center justify-center space-x-2 transition">
+              <i class="fa-solid fa-eye"></i>
+              <span>Submit & Reveal Model Answer</span>
+            </button>
+          </div>
+        `;
+      }
+
+      const sourcesContainer = document.getElementById("grounding-sources-container");
+      const sourcesList = document.getElementById("grounding-sources-list");
+      if (currentQuestion.groundingSources && currentQuestion.groundingSources.length > 0) {
+        sourcesContainer.classList.remove("hidden");
+        sourcesList.innerHTML = "";
+        currentQuestion.groundingSources.forEach(source => {
+          const a = document.createElement("a");
+          a.href = source.uri;
+          a.target = "_blank";
+          a.className = "hover:underline flex items-center gap-1";
+          a.innerHTML = `<i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> ${source.title}`;
+          sourcesList.appendChild(a);
+        });
+      } else {
+        sourcesContainer.classList.add("hidden");
+      }
+
+      // Update Navigation Bar
+      const navContainer = document.getElementById("question-nav");
+      if (questionsList.length > 1) {
+        navContainer.classList.remove("hidden");
+        const currentIndex = questionsList.findIndex(q => q.id === currentQuestion.id);
+        
+        // Visual indicator so users know there are more questions
+        document.getElementById("question-counter").innerText = `Question ${currentIndex + 1} of ${questionsList.length}`;
+        document.getElementById("btn-prev-q").disabled = currentIndex === 0;
+        document.getElementById("btn-next-q").disabled = currentIndex === questionsList.length - 1;
+      } else {
+        navContainer.classList.add("hidden");
+      }
+    }
+
+    function selectInteractiveOption(idx) {
+      if (selectedOptionIndex !== null || currentQuestion.type !== "OBA") return; 
+      selectedOptionIndex = idx;
+
+      const alphabet = ["A", "B", "C", "D", "E"];
+      currentQuestion.options.forEach((_, optIdx) => {
+        const el = document.getElementById(`interactive-option-${optIdx}`);
+        const badge = el.querySelector("span");
+        if (optIdx === currentQuestion.correctOptionIndex) {
+          el.className = "border-2 border-emerald-500 bg-emerald-50/50 rounded-xl p-4 flex items-start space-x-3";
+          badge.className = "w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold shrink-0";
+          badge.innerHTML = `<i class="fa-solid fa-check"></i>`;
+        } else if (optIdx === idx) {
+          el.className = "border-2 border-rose-500 bg-rose-50/50 rounded-xl p-4 flex items-start space-x-3";
+          badge.className = "w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs font-bold shrink-0";
+          badge.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
+        } else {
+          el.className = "border border-slate-200 rounded-xl p-4 flex items-start space-x-3 opacity-60";
+        }
+      });
+
+      document.getElementById("explanation-box").classList.remove("hidden");
+      document.getElementById("pearl-text").innerText = currentQuestion.highYieldPearl;
+      document.getElementById("review-title").innerText = "Detailed Explanatory Review";
+
+      const expContainer = document.getElementById("all-exp-container");
+      expContainer.innerHTML = "";
+      currentQuestion.options.forEach((opt, optIdx) => {
+        const isCorrectExp = optIdx === currentQuestion.correctOptionIndex;
+        const expText = isCorrectExp ? currentQuestion.correctReason : (currentQuestion.distractors[optIdx] || 'This distractor does not fully align with clinical markers in this vignette.');
+        const bgClass = isCorrectExp ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-200";
+        const textClass = isCorrectExp ? "text-emerald-900" : "text-slate-700";
+        const badgeBg = isCorrectExp ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-600";
+        const label = isCorrectExp ? "Correct" : "Incorrect";
+
+        const item = document.createElement("div");
+        item.className = `rounded-xl p-4 border ${bgClass}`;
+        item.innerHTML = `
+          <div class="flex items-start space-x-3">
+            <span class="${badgeBg} text-xs font-bold px-2 py-1 rounded uppercase mt-0.5 shrink-0 border border-slate-200/50">${alphabet[optIdx]}</span>
+            <div class="space-y-1">
+              <strong class="text-sm ${textClass} block font-bold">${opt} <span class="text-xs font-medium opacity-60 ml-1">(${label})</span></strong>
+              <p class="text-xs sm:text-sm ${textClass} leading-relaxed">${expText}</p>
+            </div>
+          </div>
+        `;
+        expContainer.appendChild(item);
+      });
+    }
+
+    function revealSEQAnswer() {
+      if (!currentQuestion || currentQuestion.type !== "SEQ") return;
+
+      document.getElementById("explanation-box").classList.remove("hidden");
+      document.getElementById("pearl-text").innerText = currentQuestion.highYieldPearl;
+      document.getElementById("review-title").innerText = "Model Answer & Grading Rubric";
+      
+      const expContainer = document.getElementById("all-exp-container");
+      expContainer.innerHTML = `
+        <div class="rounded-xl p-5 border border-emerald-200 bg-emerald-50 mb-4">
+          <strong class="text-sm text-emerald-900 block font-bold mb-2">Model Essay Answer:</strong>
+          <p class="text-sm text-emerald-800 leading-relaxed">${currentQuestion.modelAnswer}</p>
+        </div>
+        <div class="rounded-xl p-5 border border-slate-200 bg-white">
+          <strong class="text-sm text-slate-800 block font-bold mb-3 flex items-center gap-2"><i class="fa-solid fa-list-check text-indigo-500"></i> Grading Rubric Criteria:</strong>
+          <ul class="space-y-2">
+            ${currentQuestion.gradingRubric.map(item => `
+              <li class="flex items-start space-x-2 text-sm text-slate-700">
+                <i class="fa-regular fa-square-check text-emerald-500 mt-1"></i>
+                <span>${item}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    function populateEditor() {
+      if (!currentQuestion) return;
+
+      const container = document.getElementById("dynamic-editor-fields");
+      let html = `
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Vignette Text</label>
+          <textarea id="edit-vignette" rows="6" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-medium">${currentQuestion.vignette}</textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Lead-In Question</label>
+          <input type="text" id="edit-leadin" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-medium" value="${currentQuestion.leadIn}">
+        </div>
+      `;
+
+      if (currentQuestion.type === "OBA") {
+        html += `<div class="space-y-2"><label class="block text-xs font-semibold text-slate-500 uppercase">Options (A - E)</label><div class="grid grid-cols-1 gap-2" id="edit-options-container">`;
+        const alphabet = ["A", "B", "C", "D", "E"];
+        currentQuestion.options.forEach((opt, idx) => {
+          const isCorrect = idx === currentQuestion.correctOptionIndex;
+          const expText = isCorrect ? currentQuestion.correctReason : (currentQuestion.distractors[idx] || '');
+          html += `
+            <div class="space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="flex items-center space-x-2">
+                <span class="bg-slate-200 border border-slate-300 text-xs font-bold text-slate-700 w-8 h-8 rounded-lg flex items-center justify-center shrink-0">${alphabet[idx]}</span>
+                <input type="text" id="edit-option-${idx}" value="${opt}" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+              </div>
+              <div class="pl-10">
+                <textarea id="edit-exp-${idx}" rows="2" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder-slate-400" placeholder="Explanation for this option...">${expText}</textarea>
+              </div>
+            </div>`;
+        });
+        html += `</div></div>`;
+        
+        let selectOptions = "";
+        alphabet.forEach((a, i) => { selectOptions += `<option value="${i}" ${i === currentQuestion.correctOptionIndex ? 'selected' : ''}>${a}</option>`; });
+        
+        html += `
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Correct Answer</label>
+              <select id="edit-correct-index" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2">${selectOptions}</select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">High-Yield Pearl</label>
+              <input type="text" id="edit-pearl" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2" value="${currentQuestion.highYieldPearl}">
+            </div>
+          </div>`;
+      } else {
+        html += `
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Model Answer</label>
+            <textarea id="edit-model-answer" rows="4" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500">${currentQuestion.modelAnswer}</textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Grading Rubric (One per line)</label>
+            <textarea id="edit-rubric" rows="4" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-indigo-500 placeholder-slate-400" placeholder="+1 point for X\n+1 point for Y">${currentQuestion.gradingRubric.join('\n')}</textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">High-Yield Pearl</label>
+            <input type="text" id="edit-pearl" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:ring-2" value="${currentQuestion.highYieldPearl}">
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function saveManualEdits() {
+      if (!currentQuestion) return;
+
+      currentQuestion.vignette = document.getElementById("edit-vignette").value;
+      currentQuestion.leadIn = document.getElementById("edit-leadin").value;
+      currentQuestion.highYieldPearl = document.getElementById("edit-pearl").value;
+
+      if (currentQuestion.type === "OBA") {
+        currentQuestion.correctOptionIndex = parseInt(document.getElementById("edit-correct-index").value);
+        const updatedOptions = [], updatedDistractors = [];
+        let updatedCorrectReason = "";
+        for (let i = 0; i < 5; i++) {
+          updatedOptions.push(document.getElementById(`edit-option-${i}`).value);
+          const exp = document.getElementById(`edit-exp-${i}`).value;
+          if (i === currentQuestion.correctOptionIndex) {
+            updatedCorrectReason = exp;
+            updatedDistractors.push("");
+          } else {
+            updatedDistractors.push(exp);
+          }
+        }
+        currentQuestion.options = updatedOptions;
+        currentQuestion.correctReason = updatedCorrectReason;
+        currentQuestion.distractors = updatedDistractors;
+      } else {
+        currentQuestion.modelAnswer = document.getElementById("edit-model-answer").value;
+        currentQuestion.gradingRubric = document.getElementById("edit-rubric").value.split('\n').filter(l => l.trim() !== '');
+      }
+
+      const idxInBank = questionsList.findIndex(q => q.id === currentQuestion.id);
+      if (idxInBank !== -1) questionsList[idxInBank] = { ...currentQuestion };
+
+      renderQBank();
+      switchTab("interactive");
+      selectedOptionIndex = null;
+      renderInteractiveQuestion();
+    }
+
+    function renderQBank() {
+      const countEl = document.getElementById("qbank-count");
+      countEl.innerText = questionsList.length;
+      const container = document.getElementById("bank-list-container");
+      
+      if (questionsList.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-slate-400">
+            <i class="fa-solid fa-folder-open text-4xl mb-3 block text-slate-300"></i>
+            <p class="text-sm font-medium">Your question bank is empty.</p>
+            <p class="text-xs text-slate-400 mt-1">Generate dynamic USMLE OBAs to store them in this session.</p>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = "";
+      questionsList.forEach(q => {
+        const item = document.createElement("div");
+        item.className = "bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl p-4 cursor-pointer transition flex justify-between items-start gap-4";
+        item.onclick = () => selectFromBank(q.id);
+        const formatBadgeColor = q.type === 'OBA' ? 'bg-indigo-100 text-indigo-800' : 'bg-cyan-100 text-cyan-800';
+
+        item.innerHTML = `
+          <div class="space-y-1 flex-grow">
+            <div class="flex items-center space-x-2">
+              <span class="${formatBadgeColor} text-[10px] font-bold px-2 py-0.5 rounded">${q.type}</span>
+              <span class="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded">${q.subject}</span>
+              <span class="text-[10px] text-slate-400 font-mono">ID: ${q.id.substring(q.id.length - 5)}</span>
+            </div>
+            <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${q.leadIn}</h4>
+            <p class="text-[11px] text-slate-500 line-clamp-2">${q.vignette}</p>
+          </div>
+          <div class="flex items-center space-x-1 shrink-0">
+            <button onclick="event.stopPropagation(); deleteQuestion('${q.id}')" class="text-rose-600 hover:bg-rose-100 p-1.5 rounded-lg transition" title="Delete from bank"><i class="fa-solid fa-trash-can text-xs"></i></button>
+          </div>`;
+        container.appendChild(item);
+      });
+    }
+
+    function selectFromBank(id) {
+      const q = questionsList.find(item => item.id === id);
+      if (q) {
+        currentQuestion = q;
+        selectedOptionIndex = null;
+        renderInteractiveQuestion();
+        switchTab("interactive");
+      }
+    }
+
+    function deleteQuestion(id) {
+      questionsList = questionsList.filter(q => q.id !== id);
+      renderQBank();
+      if (currentQuestion && currentQuestion.id === id) {
+        currentQuestion = questionsList[0] || null;
+        selectedOptionIndex = null;
+        if (currentQuestion) {
+          renderInteractiveQuestion();
+        } else {
+          document.getElementById("preview-vignette").innerText = "No clinical vignettes generated.";
+          document.getElementById("preview-leadin").innerText = "";
+          document.getElementById("preview-options-container").innerHTML = "";
+          document.getElementById("question-nav").classList.add("hidden");
+        }
+      }
+    }
+
+    function clearQBank() {
+      questionsList = [];
+      currentQuestion = null;
+      selectedOptionIndex = null;
+      renderQBank();
+      document.getElementById("preview-vignette").innerText = "Please configure options on the left and click 'Draft 5 Clinical Questions' to generate.";
+      document.getElementById("preview-leadin").innerText = "";
+      document.getElementById("preview-options-container").innerHTML = "";
+      document.getElementById("explanation-box").classList.add("hidden");
+      document.getElementById("question-nav").classList.add("hidden");
+    }
+
+    async function generateBulkQuestions() {
+      const topic = document.getElementById("bulk-topic").value.trim() || "Hypertension Pathway";
+      const format = document.getElementById("format-select").value;
+      const selectedModel = "gemini-2.5-flash-preview-09-2025";
+      
+      showLoader(true, "Orchestrating 5 Concept Vignettes", "Drafting progressive items based on USMLE Step blueprints...");
+
+      const systemPrompt = `You are a curriculum editor for clinical boards. Draft EXACTLY 5 progressive questions focusing on the requested pathway system. Return a JSON object with a 'questions' array containing exactly 5 items.`;
+      
+      let userQuery = `Create a progressive sequence of 5 USMLE-style questions for: "${topic}". Format: ${format}.
+Each question should present a slightly different medical patient profile, shifting from diagnostic presentation to biochemical base pathway to pharmacology. Return structured JSON exactly matching the requested schema.`;
+
+      let jsonSchema = {};
+
+      if(format === "OBA") {
+         jsonSchema = {
+          type: "OBJECT",
+          properties: {
+            questions: {
+              type: "ARRAY",
+              description: "Array containing exactly 5 distinct question objects.",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  vignette: { type: "STRING" }, leadIn: { type: "STRING" }, options: { type: "ARRAY", items: { type: "STRING" } }, correctOptionIndex: { type: "INTEGER" },
+                  explanation: { type: "OBJECT", properties: { correctReason: { type: "STRING" }, distractors: { type: "ARRAY", items: { type: "STRING" } }, highYieldPearl: { type: "STRING" } }, required: ["correctReason", "distractors", "highYieldPearl"] }
+                }, required: ["vignette", "leadIn", "options", "correctOptionIndex", "explanation"]
+              }
+            }
+          },
+          required: ["questions"]
+        };
+      } else {
+         jsonSchema = {
+          type: "OBJECT",
+          properties: {
+            questions: {
+              type: "ARRAY",
+              description: "Array containing exactly 5 distinct question objects.",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  vignette: { type: "STRING" }, leadIn: { type: "STRING" }, modelAnswer: { type: "STRING" }, gradingRubric: { type: "ARRAY", items: { type: "STRING" } }, highYieldPearl: { type: "STRING" }
+                }, required: ["vignette", "leadIn", "modelAnswer", "gradingRubric", "highYieldPearl"]
+              }
+            }
+          },
+          required: ["questions"]
+        };
+      }
+
+      try {
+        const result = await makeGeminiApiCall(userQuery, systemPrompt, jsonSchema, false, selectedModel);
+        
+        let questionsArray = [];
+        if (result && result.questions && Array.isArray(result.questions)) {
+            questionsArray = result.questions;
+        } else if (Array.isArray(result)) {
+            questionsArray = result;
+        }
+
+        if (questionsArray.length > 0) {
+          questionsArray.reverse().forEach((item, index) => {
+            let compiledQ = {
+              id: `${Date.now()}-${index}`, type: format, subject: "Systems Progression (" + (index + 1) + ")", tier: "Progressive Module", vignette: item.vignette, leadIn: item.leadIn, highYieldPearl: format === 'OBA' ? item.explanation.highYieldPearl : item.highYieldPearl, groundingSources: []
+            };
+            if(format === "OBA") {
+              compiledQ.options = item.options; compiledQ.correctOptionIndex = parseInt(item.correctOptionIndex); compiledQ.correctReason = item.explanation.correctReason; compiledQ.distractors = item.explanation.distractors;
+            } else {
+              compiledQ.modelAnswer = item.modelAnswer; compiledQ.gradingRubric = item.gradingRubric;
+            }
+            questionsList.unshift(compiledQ);
+          });
+          currentQuestion = questionsList[0];
+          selectedOptionIndex = null;
+          renderInteractiveQuestion();
+          renderQBank();
+          switchTab("interactive");
+        } else {
+          throw new Error("Bulk engine output could not be translated to array.");
+        }
+      } catch (err) {
+        toggleErrorModal("Bulk Synthesis Failure", `Failed to compile bulk curriculum. Detail: ${err.message}`);
+      } finally {
+        showLoader(false);
+      }
+    }
+
+    function exportToClipboard() {
+      if (!currentQuestion) return;
+      let md = `## USMLE-Style ${currentQuestion.type} (Subject: ${currentQuestion.subject})\n\n### Clinical Vignette\n${currentQuestion.vignette}\n\n### Lead-In Question\n**${currentQuestion.leadIn}**\n\n`;
+      
+      if (currentQuestion.type === "OBA") {
+        const alphabet = ["A", "B", "C", "D", "E"];
+        md += `### Options\n`;
+        currentQuestion.options.forEach((opt, idx) => { md += `${alphabet[idx]}. ${opt} ${idx === currentQuestion.correctOptionIndex ? '*(Correct Answer)*' : ''}\n`; });
+        md += `\n### Explanations & Review\n`;
+        currentQuestion.options.forEach((opt, idx) => { md += idx === currentQuestion.correctOptionIndex ? `* **Option ${alphabet[idx]} (Correct):** ${currentQuestion.correctReason}\n` : `* **Option ${alphabet[idx]} (Incorrect):** ${currentQuestion.distractors[idx]}\n`; });
+      } else {
+        md += `### Model Answer\n${currentQuestion.modelAnswer}\n\n### Grading Rubric\n`;
+        currentQuestion.gradingRubric.forEach(r => md += `- [ ] ${r}\n`);
+      }
+      md += `\n### High Yield Pearl\n> ${currentQuestion.highYieldPearl}\n`;
+
+      const tempText = document.createElement("textarea");
+      tempText.value = md; document.body.appendChild(tempText); tempText.select(); document.execCommand('copy'); document.body.removeChild(tempText);
+      alert(`Successfully copied USMLE ${currentQuestion.type} Markdown to clipboard!`);
+    }
+
+    function downloadAsWord() {
+      if (!currentQuestion) return;
+      
+      let htmlContent = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>Branded Methods MedQuest USMLE Export</title>
+          <style>
+            body { font-family: 'Calibri', 'Arial', sans-serif; line-height: 1.6; color: #333; }
+            h2 { color: #1e3a8a; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
+            h3 { color: #334155; margin-top: 20px; }
+            .pearl-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 5px; margin-top: 20px; }
+            .pearl-title { color: #166534; font-weight: bold; margin-top: 0; }
+          </style>
+        </head>
+        <body>
+          <h2>USMLE-Style ${currentQuestion.type} Question</h2>
+          <p><strong>Subject:</strong> ${currentQuestion.subject} | <strong>Tier:</strong> ${currentQuestion.tier}</p>
+          
+          <h3>Clinical Vignette</h3>
+          <p>${currentQuestion.vignette}</p>
+          
+          <h3>Lead-In Question</h3>
+          <p><strong>${currentQuestion.leadIn}</strong></p>
+      `;
+      
+      if (currentQuestion.type === "OBA") {
+        const alphabet = ["A", "B", "C", "D", "E"];
+        
+        htmlContent += `<h3>Options</h3><ul style="list-style-type: none; padding-left: 0;">`;
+        currentQuestion.options.forEach((opt, idx) => { 
+          const isCorrect = idx === currentQuestion.correctOptionIndex ? " <strong>(Correct Answer)</strong>" : "";
+          htmlContent += `<li style="margin-bottom: 5px;"><strong>[${alphabet[idx]}]</strong> ${opt}${isCorrect}</li>`; 
+        });
+        htmlContent += `</ul>`;
+
+        htmlContent += `<h3>Explanations & Review</h3><ul>`;
+        currentQuestion.options.forEach((opt, idx) => { 
+          if (idx === currentQuestion.correctOptionIndex) {
+            htmlContent += `<li style="margin-bottom: 10px;"><strong>[${alphabet[idx]}] Correct:</strong> ${currentQuestion.correctReason}</li>`;
+          } else {
+            htmlContent += `<li style="margin-bottom: 10px;"><strong>[${alphabet[idx]}] Incorrect:</strong> ${currentQuestion.distractors[idx]}</li>`;
+          }
+        });
+        htmlContent += `</ul>`;
+      } else {
+        htmlContent += `
+          <h3>Model Answer</h3>
+          <p>${currentQuestion.modelAnswer}</p>
+          
+          <h3>Grading Rubric</h3>
+          <ul>
+        `;
+        currentQuestion.gradingRubric.forEach(r => { htmlContent += `<li>[  ] ${r}</li>`; });
+        htmlContent += `</ul>`;
+      }
+      
+      htmlContent += `
+          <div class="pearl-box">
+            <p class="pearl-title">High-Yield Clinical Pearl</p>
+            <p style="margin-bottom: 0;">${currentQuestion.highYieldPearl}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Create a blob with the MS Word MIME type. Added '\ufeff' (BOM) to ensure UTF-8 characters render correctly in Word.
+      const blob = new Blob(['\ufeff', htmlContent], { type: "application/msword" });
+      const url = URL.createObjectURL(blob); 
+      const a = document.createElement("a"); 
+      a.href = url;
+      a.download = `USMLE_${currentQuestion.type}_${currentQuestion.id.substring(currentQuestion.id.length - 5)}.doc`;
+      document.body.appendChild(a); 
+      a.click(); 
+      document.body.removeChild(a); 
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
